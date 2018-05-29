@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://cdn.rawgit.com/VACLab/d3-tip/master/d3-tip.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+  <style>
+    body { 
+      margin:0;position:fixed;top:0;right:0;bottom:0;left:0;
+      font-family: "Open Sans", sans-serif;
+		}
+    
+    .d3-tip {
+      line-height: 1.2;
+      text-align: center;
+      padding: 12px;
+      background: rgba(250, 246, 186, 0.9);
+      color: #000000;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    
+    .d3-tip:after {
+      box-sizing: border-box;
+      display: inline;
+      font-size: 10px;
+      width: 100%;
+      line-height: 1;
+      color: rgba(0, 0, 0, 0.8);
+      position: absolute;
+      pointer-events: none;
+      content: "\25BC";
+      margin: -1px 0 0 0;
+      top: 100%;
+      left: 0;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    var margin = { top: 70, right: 60, bottom: 110, left: 140 };
+		var width = 720 - margin.right - margin.left;
+    var height = 500 - margin.top - margin.bottom;
+    
+    var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    	.attr('shape-rendering', 'crisp-edges')
+    	.append('g')
+    		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+    var data = [
+			{ x: "2,4-Dichlorophenol", group: "Chlorinated Phenol", y: 81.4 },
+			{ x: "2,5-Dichlorophenol", group: "Chlorinated Phenol", y: 96.6 },
+			{ x: "Benzophenone-3", group: "Sunscreen Chemical", y: 99.3 },
+			{ x: "Bisphenol A", group: "Bisphenol", y: 72.5 },
+			{ x: "Bisphenol F", group: "Bisphenol", y: 92.2 },
+			{ x: "Bisphenol S", group: "Bisphenol", y: 65.1 },
+			{ x: "Butyl Paraben", group: "Paraben", y: 15.9 },
+			{ x: "Ethyl Paraben", group: "Paraben", y: 66.1 },
+			{ x: "Methyl Paraben", group: "Paraben", y: 100 },
+			{ x: "Propyl Paraben", group: "Paraben", y: 88.5 },
+			{ x: "Triclocarban", group: "Antimicrobial", y: 0.0 },
+			{ x: "Triclosan", group: "Antimicrobial", y: 27.8 }
+    ];
+    
+    data.sort(function(a, b) { return d3.descending(a.y, b.y); });
+    
+    var tip = d3.tip()
+    	.attr('class', 'd3-tip')
+    	.offset([-10, 0])
+    	.html(function(d) {
+        var html = "<strong>" + d.x + "</strong> ";
+        html += "(" + d.group.toLowerCase() + ")";
+        html += "<br/>";
+        html += "detected in " + d.y + "% of participant samples"
+        return html;
+      })
+    
+    var x = d3.scaleBand()
+    	.padding(0.15)
+    	.domain(data.map(function(d) { return d.x; }))
+    	.range([0, width]);
+    
+    var y = d3.scaleLinear()
+    	.domain(d3.extent(data.map(function(d) { return d.y / 100; })))
+    	.range([height, 0]);
+    
+    var xaxis = d3.axisBottom(x);
+    var yaxis = d3.axisLeft(y)
+    	.tickValues([0, .25, .50, .75, 1])
+    	.tickFormat(d3.format(".0%"));
+
+    svg.append('g')
+    	.attr('transform', 'translate(0, ' + height + ')')
+    	.call(xaxis)
+    	.selectAll('text')
+    	.attr('transform', 'rotate(-45)')
+    	.attr('text-anchor', 'end')
+    	.style('font-size', '12px')
+    
+    svg.append('g')
+    	.call(yaxis)
+    	.selectAll('text')
+    	.style('font-size', '12px');
+   
+    svg.append('text')
+    	.text("Percent of participants who have a detectable level")
+    	.attr('text-anchor', 'middle')
+    	.attr('transform', 'translate(-50, ' + (height/2) + ') rotate(-90) ');
+    
+    svg.append('text')
+    	.text("How often did we find each chemical in our participants?")
+    	.style('font-size', '14pt')
+    	.style('font-weight', 'bold')
+    	.attr('transform', 'translate(0, -30)')
+    
+    svg.call(tip);
+    
+    svg.selectAll('.bar')
+    	.data(data)
+    	.enter()
+    	.append('rect')
+    	.attr('class', 'bar')
+    	.attr('width', x.bandwidth())
+    	.attr('height', function(d) { return height - y(d.y / 100); })
+    	.attr('transform', function(d) {
+      	return "translate(" + x(d.x) + "," + (y(d.y / 100)) + ")";
+    	})
+    	.style('fill', 'rgb(89,145,190)')
+    	.on('mouseover', tip.show)
+    	.on('mouseout', tip.hide)
+  </script>
+</body>
